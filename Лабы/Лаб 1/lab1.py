@@ -1,6 +1,32 @@
 import re
 
 
+class Node:
+    def __init__(self, value, left=None, right=None):
+        self.value = value
+        self.left = left 
+        self.right = right
+
+    def is_leaf(self):
+        return self.left == None and self.right == None
+
+    def __repr__(self):
+        if self.is_leaf():
+            return f"{self.value}"
+        return f"[{self.value} {self.left!r} {self.right!r}]"
+
+
+def print_tree(node, pad_num=0, label=""):
+    pad = "    " * pad_num
+    if label:
+        print(f"{pad}{label}: {node.value}")
+    else:
+        print(f"{pad}{node.value}")
+    if not node.is_leaf():
+        print_tree(node.left, pad_num + 1, "L")
+        print_tree(node.right, pad_num + 1, "R")
+
+
 class Token:
     
     def __init__(self, type: str, value: str, ):
@@ -82,7 +108,7 @@ def tokenize(text):
             continue
         
         c = text[position]
-        raise ValueError("Ошибка! Недопустимый символ: " + '(c)')
+        raise ValueError("Ошибка! Недопустимый символ:  '" + c +"'")
     
     tokens.append(Token("EOF", ""))
     
@@ -144,33 +170,35 @@ class Parser:
     
     
     def parseS(self):
-        self.parseE()
+        return self.parseE()
 
     def parseE(self):
-        self.parseT()
-        self.parseEPrime()
+        left = self.parseT()
+        return self.parseEPrime(left)
 
-    def parseEPrime(self):
+    def parseEPrime(self, left):
         while True:
             tok = self.current()
             if tok.type == "ADD" or tok.type == "SUB":
-                self.getNextToken()
-                self.parseT()
+                operation = self.getNextToken().value
+                right = self.parseT()
+                left = Node(operation, left, right)
             else:
-                break
+                return left
 
     def parseT(self):
-        self.parseF()
-        self.parseTPrime()
+        left = self.parseF()
+        return self.parseTPrime(left)
 
-    def parseTPrime(self):
+    def parseTPrime(self, left):
         while True:
             tok = self.current()
             if tok.type == "MUL" or tok.type == "DIV":
-                self.getNextToken()
-                self.parseF()
+                operation = self.getNextToken().value
+                right = self.parseF()
+                left = Node(operation, left, right)
             else:
-                break
+                return left
 
     def parseF(self):
         
@@ -178,20 +206,23 @@ class Parser:
 
         if tok.type == "LPAREN":
             self.match("LPAREN")
-            self.parseS()
+            node = self.parseS()
             self.match("RPAREN")
+            return node
 
         elif tok.type == "NUMBER" or tok.type == "ID":
             self.getNextToken()
+            return Node(tok.value)
 
         else:
             raise ParserError("Ошибка! Ожидалось: number, id или '('")
 
     def parse(self):
         
-        self.parseS()
+        tree = self.parseS()
         if self.current().type != "EOF":
             raise ParserError("Ошибка! Ожидалось: конец строки") # проблема двух вариантов подобного примера 2 + 3 ( 66 - 9 ) - либо же писать что после 2 + 3 конец строки и найдена скобка, либо же, что там могли быть арифм.символы а появилась скобка - тип оба правильные варики, но отловить можно только здесь
+        return tree
         
 
 def analyze(text):
@@ -202,15 +233,21 @@ def analyze(text):
 
     parser = Parser(tokens)
     try:
-        parser.parse()
+        tree = parser.parse()
     except ParserError as e:
         return str(e)
 
-    return "Выражение корректно."
+    return "Выражение корректно.", tree
 
 def main():
     text = input("Ввод: ")
-    print("Вывод: " + analyze(text))
+    mes, tree = analyze(text)
+    print("Вывод: " + mes)
+    print('-' * 10)
+    print("Дерево разбора:")
+    print(tree)
+    print('-' * 10)
+    print_tree(tree)
 
 if __name__ == "__main__":
     main()
