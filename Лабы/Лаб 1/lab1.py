@@ -229,13 +229,13 @@ def analyze(text):
     try:
         tokens = tokenize(text)
     except ValueError as e:
-        return str(e)
+        return str(e), None
 
     parser = Parser(tokens)
     try:
         tree = parser.parse()
     except ParserError as e:
-        return str(e)
+        return str(e), None
 
     return "Выражение корректно.", tree
 
@@ -247,7 +247,8 @@ def main():
     print("Дерево разбора:")
     print(tree)
     print('-' * 10)
-    print_tree(tree)
+    if tree:
+        print_tree(tree)
 
 if __name__ == "__main__":
     main()
