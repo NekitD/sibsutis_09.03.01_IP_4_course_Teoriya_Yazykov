@@ -10,7 +10,7 @@ class Node:
     def is_leaf(self):
         return self.left == None and self.right == None
 
-    def __repr__(self):
+    def __str__(self):
         if self.is_leaf():
             return f"{self.value}"
         return f"[{self.value} {self.left} {self.right}]"
