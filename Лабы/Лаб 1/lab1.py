@@ -13,7 +13,7 @@ class Node:
     def __repr__(self):
         if self.is_leaf():
             return f"{self.value}"
-        return f"[{self.value} {self.left!r} {self.right!r}]"
+        return f"[{self.value} {self.left} {self.right}]"
 
 
 def print_tree(node, pad_num=0, label=""):
